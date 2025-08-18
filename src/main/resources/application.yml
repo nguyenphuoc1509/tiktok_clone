@@ -15,3 +15,8 @@ spring:
         format_sql: true
 server:
   port: 8080
+app:
+  jwt:
+    secret: "Wo7So53gB0psFKuAga8QNNAbFX5o5nKSS0EXr0SqwT4KIbv3e5gBoIOW8zwSIoGL"
+    expiration-seconds: 3600   # 1h
+
