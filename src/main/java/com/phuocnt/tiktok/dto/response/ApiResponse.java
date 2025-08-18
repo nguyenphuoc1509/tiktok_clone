@@ -1,6 +1,7 @@
 package com.phuocnt.tiktok.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.phuocnt.tiktok.exception.ErrorCode;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,20 +12,22 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
-    @Builder.Default int code = 200;
-    @Builder.Default String message = "OK";
-    T result;
+    int code;        // HTTP status (vd: 200, 401, 404)
+    String message;  // thông điệp
+    T result;        // dữ liệu (có thể null)
 
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder().code(200).message("OK").result(data).build();
+    // Helpers
+    public static <T> ApiResponse<T> of(ErrorCode ec, String message, T data) {
+        return ApiResponse.<T>builder()
+                .code(ec.getHttpStatus().value())
+                .message(message != null ? message : ec.getDefaultMessage())
+                .result(data)
+                .build();
     }
-    public static <T> ApiResponse<T> created(T data) {
-        return ApiResponse.<T>builder().code(201).message("Created").result(data).build();
+    public static <T> ApiResponse<T> of(ErrorCode ec, T data) {
+        return of(ec, null, data);
     }
-    public static ApiResponse<Void> noContent() {
-        return ApiResponse.<Void>builder().code(204).message("No Content").build();
-    }
-    public static ApiResponse<Void> error(int code, String message) {
-        return ApiResponse.<Void>builder().code(code).message(message).build();
+    public static ApiResponse<Void> of(ErrorCode ec) {
+        return of(ec, null, null);
     }
 }
