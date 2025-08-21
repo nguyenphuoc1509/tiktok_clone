@@ -1,5 +1,6 @@
 package com.phuocnt.tiktok.controller;
 
+import com.phuocnt.tiktok.entity.Role;
 import com.phuocnt.tiktok.exception.ErrorCode;
 import com.phuocnt.tiktok.dto.request.AuthRequest;
 import com.phuocnt.tiktok.dto.response.ApiResponse;
@@ -35,13 +36,18 @@ public class AuthController {
         }
 
         var token = jwtService.generateToken(user.getUsername());
+        var roles = user.getRoles().stream().map(Role::getName).toList();
+
         var payload = AuthResponse.builder()
                 .accessToken(token)
                 .expiresIn(jwtService.getExpirationSeconds())
                 .isAuthenticated(true)
+                .userId(user.getUserId())
+                .roles(roles)
                 .build();
 
         return ResponseEntity.status(ErrorCode.OK.getHttpStatus())
                 .body(ApiResponse.of(ErrorCode.OK, payload));
     }
+
 }

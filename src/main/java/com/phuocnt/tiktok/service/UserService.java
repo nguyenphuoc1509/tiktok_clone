@@ -13,4 +13,6 @@ public interface UserService {
     UserResponse getUser(UUID userId);
     UserResponse updateUser(UUID userId, UserUpdateRequest req);
     void deleteUser(UUID userId);
+    void addRole(java.util.UUID userId, String roleName);
+    void removeRole(java.util.UUID userId, String roleName);
 }
