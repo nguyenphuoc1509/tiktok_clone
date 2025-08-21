@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -32,16 +33,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = header.substring(7);
             if (jwtService.isValid(token)) {
                 String username = jwtService.extractUsername(token);
-                userRepository.findByUsername(username).ifPresent(u -> setAuth(u));
+                userRepository.findByUsername(username).ifPresent(user -> {
+                    // Lấy authorities từ roles DB
+                    List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                            .map(r -> new SimpleGrantedAuthority(r.getName()))
+                            .toList();
+
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            user.getUsername(), null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                });
             }
         }
         chain.doFilter(req, res);
-    }
-
-    private void setAuth(User u) {
-        // tạm thời role mặc định USER; sau này lấy từ bảng roles nếu có
-        var auth = new UsernamePasswordAuthenticationToken(
-                u.getUsername(), null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContextHolder.getContext().setAuthentication(auth);
     }
 }

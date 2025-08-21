@@ -43,5 +43,12 @@ public class User {
     String bio;
 
     @Column(nullable = false)
-    Boolean isCreator = false;
+    boolean isCreator = false;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
+    @ToString.Exclude
+    java.util.Set<Role> roles = new java.util.HashSet<>();
 }

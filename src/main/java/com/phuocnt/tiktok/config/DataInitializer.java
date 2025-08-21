@@ -1,12 +1,16 @@
 package com.phuocnt.tiktok.config;
 
+import com.phuocnt.tiktok.entity.Role;
 import com.phuocnt.tiktok.entity.User;
+import com.phuocnt.tiktok.repository.RoleRepository;
 import com.phuocnt.tiktok.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
@@ -15,27 +19,29 @@ public class DataInitializer {
     private final PasswordEncoder passwordEncoder;
 
     @Bean
-    CommandLineRunner initUsers(UserRepository userRepository) {
+    CommandLineRunner seedRolesUsers(RoleRepository roleRepo, UserRepository userRepo) {
         return args -> {
-            if (userRepository.count() == 0) {
-                User admin = User.builder()
+            var userRole = roleRepo.findByName("ROLE_USER").orElseGet(() -> roleRepo.save(Role.builder().name("ROLE_USER").build()));
+            var adminRole = roleRepo.findByName("ROLE_ADMIN").orElseGet(() -> roleRepo.save(Role.builder().name("ROLE_ADMIN").build()));
+
+            if (userRepo.findByUsername("admin").isEmpty()) {
+                var admin = User.builder()
                         .username("admin")
                         .email("admin@example.com")
                         .passwordHash(passwordEncoder.encode("123456"))
-                        .bio("Admin user")
                         .isCreator(true)
+                        .roles(Set.of(userRole, adminRole))
                         .build();
-
-                User test = User.builder()
-                        .username("testuser")
-                        .email("test@example.com")
+                userRepo.save(admin);
+            }
+            if (userRepo.findByUsername("user").isEmpty()) {
+                var u = User.builder()
+                        .username("user")
+                        .email("user@example.com")
                         .passwordHash(passwordEncoder.encode("123456"))
-                        .bio("Normal test user")
-                        .isCreator(false)
+                        .roles(Set.of(userRole))
                         .build();
-
-                userRepository.save(admin);
-                userRepository.save(test);
+                userRepo.save(u);
             }
         };
     }

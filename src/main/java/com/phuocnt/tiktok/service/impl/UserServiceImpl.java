@@ -3,7 +3,11 @@ package com.phuocnt.tiktok.service.impl;
 import com.phuocnt.tiktok.dto.request.UserRequest;
 import com.phuocnt.tiktok.dto.request.UserUpdateRequest;
 import com.phuocnt.tiktok.dto.response.UserResponse;
+import com.phuocnt.tiktok.entity.Role;
 import com.phuocnt.tiktok.entity.User;
+import com.phuocnt.tiktok.exception.AppException;
+import com.phuocnt.tiktok.exception.ErrorCode;
+import com.phuocnt.tiktok.repository.RoleRepository;
 import com.phuocnt.tiktok.repository.UserRepository;
 import com.phuocnt.tiktok.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repo;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepo;
 
     @Override
     public UserResponse createUser(UserRequest req) {
@@ -74,7 +79,7 @@ public class UserServiceImpl implements UserService {
 
         if (req.getProfilePictureUrl() != null) u.setProfilePictureUrl(req.getProfilePictureUrl());
         if (req.getBio() != null) u.setBio(req.getBio());
-        if (req.getIsCreator() != null) u.setIsCreator(req.getIsCreator());
+        if (req.getIsCreator() != null) u.setCreator(req.getIsCreator());
 
         // ví dụ cập nhật lastLoginAt khi có logic đăng nhập riêng
         // u.setLastLoginAt(Instant.now());
@@ -87,16 +92,34 @@ public class UserServiceImpl implements UserService {
         repo.deleteById(userId);
     }
 
+    @Override
+    public void addRole(UUID userId, String roleName) {
+        var user = repo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "User not found"));
+        var role = roleRepo.findByName(roleName).orElseGet(() -> roleRepo.save(Role.builder().name(roleName).build()));
+        user.getRoles().add(role);
+        repo.save(user);
+    }
+
+    @Override
+    public void removeRole(UUID userId, String roleName) {
+        var user = repo.findById(userId).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "User not found"));
+        var role = roleRepo.findByName(roleName).orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "Role not found"));
+        user.getRoles().remove(role);
+        repo.save(user);
+    }
+
     private UserResponse toResponse(User u) {
+        List<String> roles = u.getRoles().stream().map(r -> r.getName()).toList();
         return UserResponse.builder()
                 .userId(u.getUserId())
                 .username(u.getUsername())
                 .email(u.getEmail())
                 .profilePictureUrl(u.getProfilePictureUrl())
                 .bio(u.getBio())
-                .isCreator(u.getIsCreator())
+                .isCreator(u.isCreator())
                 .createdAt(u.getCreatedAt())
                 .lastLoginAt(u.getLastLoginAt())
+                .roles(roles)
                 .build();
     }
 }
