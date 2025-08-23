@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,11 +58,11 @@ public class UserController {
                 .body(ApiResponse.of(ErrorCode.OK, data));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID userId) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable UUID userId){
         userService.deleteUser(userId);
-        return ResponseEntity
-                .status(ErrorCode.NO_CONTENT.getHttpStatus())
+        return ResponseEntity.status(ErrorCode.NO_CONTENT.getHttpStatus())
                 .body(ApiResponse.of(ErrorCode.NO_CONTENT));
     }
 }

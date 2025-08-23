@@ -1,5 +1,6 @@
 package com.phuocnt.tiktok.controller;
 
+import com.phuocnt.tiktok.dto.response.MeResponse;
 import com.phuocnt.tiktok.entity.Role;
 import com.phuocnt.tiktok.exception.ErrorCode;
 import com.phuocnt.tiktok.dto.request.AuthRequest;
@@ -49,5 +50,25 @@ public class AuthController {
         return ResponseEntity.status(ErrorCode.OK.getHttpStatus())
                 .body(ApiResponse.of(ErrorCode.OK, payload));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MeResponse>> me(java.security.Principal principal) {
+        // principal.getName() chính là username đã set từ JwtAuthFilter
+        var user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND, "User not found"));
+
+        var roles = user.getRoles().stream().map(r -> r.getName()).toList();
+
+        var payload = MeResponse.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .roles(roles)
+                .build();
+
+        return ResponseEntity.status(ErrorCode.OK.getHttpStatus())
+                .body(ApiResponse.of(ErrorCode.OK, payload));
+    }
+
 
 }

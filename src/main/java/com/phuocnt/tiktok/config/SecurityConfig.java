@@ -25,9 +25,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable());
         http.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.authorizeHttpRequests(reg -> reg
-                .requestMatchers("/api/auth/login").permitAll()
-                // seed/health if needed:
-                .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers("/api/auth/login", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                 .anyRequest().authenticated()
         );
         http.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
